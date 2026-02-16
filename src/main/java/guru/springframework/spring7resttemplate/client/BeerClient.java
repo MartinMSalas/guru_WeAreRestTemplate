@@ -18,6 +18,6 @@ public interface BeerClient {
     Page<BeerDTO> listBeers();
     Page<BeerDTO> listBeers(String beerName, String beerStyle, Integer page, Integer size);
 
-
-    ResponseEntity<BeerDTO> getBeerById(@PathVariable UUID beerId);
+    BeerDTO createNewBeer(BeerDTO beerDTO);
+    BeerDTO getBeerById(UUID beerId);
 }

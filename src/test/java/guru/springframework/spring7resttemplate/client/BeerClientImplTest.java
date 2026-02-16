@@ -17,6 +17,27 @@ class BeerClientImplTest {
     @Autowired
     BeerClientImpl beerClient;
 
+
+
+    @Test
+    void createBeer() {
+        BeerDTO beerDTO = BeerDTO.builder()
+                .beerName("Test Beer")
+                .beerStyle(BeerStyle.AMERICAN_IPA)
+                .upc("123456789012")
+                .price(java.math.BigDecimal.valueOf(11.22))
+                .quantityOnHand(111)
+                .build();
+
+        ResponseEntity<BeerDTO> response = beerClient.createNewBeer(beerDTO);
+        assertNotNull(response);
+        assertEquals(HttpStatusCode.valueOf(201), response.getStatusCode());
+        BeerDTO createdBeer = response.getBody();
+        assertNotNull(createdBeer);
+        assertNotNull(createdBeer.getBeerId());
+        assertEquals(beerDTO.getBeerName(), createdBeer.getBeerName());
+    }
+
     @Test
     void getBeerById(){
 

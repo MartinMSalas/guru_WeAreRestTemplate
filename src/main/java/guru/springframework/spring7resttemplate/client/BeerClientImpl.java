@@ -31,6 +31,29 @@ public class BeerClientImpl implements BeerClient {
 
     private static final String BEER = "/beer";
 
+    @Override
+    public BeerDTO createNewBeer(BeerDTO beerDTO) {
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(BEER);
+
+        ResponseEntity<BeerDTO> responseEntity =
+                restTemplate.postForEntity(uriComponentsBuilder.toUriString(), beerDTO, BeerDTO.class);
+
+        return responseEntity.getBody();
+    }
+
+    @Override
+    public BeerDTO getBeerById(UUID beerId) {
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        if(beerId == null){
+            throw new IllegalArgumentException("Beer ID must not be null");
+        }
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(BEER + "/{beerId}")
+                .uriVariables(Map.of("beerId", beerId));
+
+        ResponseEntity<BeerDTO> responseEntity = restTemplate.getForEntity(uriComponentsBuilder.toUriString(), BeerDTO.class);
+        return responseEntity.getBody();
+    }
 
     @Override
     public Page<BeerDTO> listBeers() {
@@ -72,19 +95,6 @@ public class BeerClientImpl implements BeerClient {
                 System.out.println(beer.getBeerName()));
 
         return responsePageBodypage;
-    }
-
-    @Override
-    public ResponseEntity<BeerDTO> getBeerById(UUID beerId) {
-            RestTemplate restTemplate = restTemplateBuilder.build();
-            if(beerId == null){
-                throw new IllegalArgumentException("Beer ID must not be null");
-            }
-            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(BEER + "/{beerId}")
-                    .uriVariables(Map.of("beerId", beerId));
-
-            ResponseEntity<BeerDTO> responseEntity = restTemplate.getForEntity(uriComponentsBuilder.toUriString(), BeerDTO.class);
-            return responseEntity;
     }
 }
 
