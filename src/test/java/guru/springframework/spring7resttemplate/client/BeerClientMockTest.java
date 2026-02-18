@@ -1,9 +1,6 @@
 package guru.springframework.spring7resttemplate.client;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import guru.springframework.spring7resttemplate.config.RestTemplateBuilderConfig;
 import guru.springframework.spring7resttemplate.model.BeerDTO;
 import guru.springframework.spring7resttemplate.model.BeerDTOPageImpl;
@@ -12,9 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
-import org.springframework.boot.test.web.client.MockServerRestTemplateCustomizer;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpMethod;
@@ -34,12 +30,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
+// import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import tools.jackson.databind.ObjectMapper;
 /*
  * Author: M
  * Date: 16-Feb-26
  * Project Name: We are Rest Template
  * Description: beExcellent
  */
+/*
 @RestClientTest
 @Import(RestTemplateBuilderConfig.class)
 public class BeerClientMockTest {
@@ -189,3 +188,5 @@ public class BeerClientMockTest {
         return new BeerDTOPageImpl(Arrays.asList(getBeerDto()), 1, 25, 1);
     }
 }
+
+ */

@@ -1,10 +1,12 @@
 package guru.springframework.spring7resttemplate.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.boot.restclient.autoconfigure.RestTemplateBuilderConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.time.Duration;
 
@@ -14,18 +16,32 @@ import java.time.Duration;
  * Project Name: We are Rest Template
  * Description: beExcellent
  */
+@Slf4j
 @Configuration
 public class RestTemplateBuilderConfig {
 
-    @Value("${rest.template.rootUrl:http://localhost:8080}")
-    private String rootUrl;
+
+    @Value("${rest.template.rootUrl}")
+    String rootUrl;
+
+    @Value("${rest.template.username}")
+    String username;
+
+    @Value("${rest.template.password}")
+    String password;
 
     @Bean
     RestTemplateBuilder restTemplateBuilder(RestTemplateBuilderConfigurer configurer){
+        log.info("Configuring RestTemplateBuilder with root URL: {}", rootUrl);
+        log.debug("Username: {}, Password: {}", username, password != null ? "******" : null);
+        assert rootUrl != null;
 
-        return configurer.configure(new RestTemplateBuilder())
-                .rootUri(rootUrl)
-                .connectTimeout(Duration.ofSeconds(5))
-                .readTimeout(Duration.ofSeconds(2));
+        RestTemplateBuilder builder = configurer.configure(new RestTemplateBuilder());
+        DefaultUriBuilderFactory uriBuilderFactory = new
+                DefaultUriBuilderFactory(rootUrl);
+
+        RestTemplateBuilder builderWithAuth = builder.basicAuthentication(username,password);
+
+        return builderWithAuth.uriTemplateHandler(uriBuilderFactory);
     }
 }

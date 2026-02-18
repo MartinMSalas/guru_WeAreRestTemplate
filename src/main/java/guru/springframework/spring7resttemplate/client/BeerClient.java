@@ -18,6 +18,9 @@ public interface BeerClient {
     Page<BeerDTO> listBeers();
     Page<BeerDTO> listBeers(String beerName, String beerStyle, Integer page, Integer size);
 
-    BeerDTO createNewBeer(BeerDTO beerDTO);
+    BeerDTO createBeer(BeerDTO beerDTO);
     BeerDTO getBeerById(UUID beerId);
+
+    BeerDTO updateBeer(UUID beerId, BeerDTO beerDTO);
+    BeerDTO deleteBeer(UUID beerId);
 }

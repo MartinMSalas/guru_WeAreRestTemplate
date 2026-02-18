@@ -32,7 +32,7 @@ public class BeerClientImpl implements BeerClient {
     private static final String BEER = "/beer";
 
     @Override
-    public BeerDTO createNewBeer(BeerDTO beerDTO) {
+    public BeerDTO createBeer(BeerDTO beerDTO) {
         RestTemplate restTemplate = restTemplateBuilder.build();
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(BEER);
 
@@ -53,6 +53,16 @@ public class BeerClientImpl implements BeerClient {
 
         ResponseEntity<BeerDTO> responseEntity = restTemplate.getForEntity(uriComponentsBuilder.toUriString(), BeerDTO.class);
         return responseEntity.getBody();
+    }
+
+    @Override
+    public BeerDTO updateBeer(UUID beerId, BeerDTO beerDTO) {
+        return null;
+    }
+
+    @Override
+    public BeerDTO deleteBeer(UUID beerId) {
+        return null;
     }
 
     @Override

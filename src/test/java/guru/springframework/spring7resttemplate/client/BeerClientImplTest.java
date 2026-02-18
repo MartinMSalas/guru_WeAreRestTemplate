@@ -8,9 +8,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
+
+import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+
 @SpringBootTest
 class BeerClientImplTest {
 
@@ -18,138 +23,179 @@ class BeerClientImplTest {
     BeerClientImpl beerClient;
 
 
-
-    @Test
-    void createBeer() {
-        BeerDTO beerDTO = BeerDTO.builder()
-                .beerName("Test Beer")
+    private BeerDTO buildUniqueBeerDto() {
+        String unique = String.valueOf(System.nanoTime());
+        return BeerDTO.builder()
+                .price(new BigDecimal("10.99"))
+                .beerName("Mango BLOBS " + unique)
                 .beerStyle(BeerStyle.AMERICAN_IPA)
-                .upc("123456789012")
-                .price(java.math.BigDecimal.valueOf(11.22))
-                .quantityOnHand(111)
-                .build();
-
-        ResponseEntity<BeerDTO> response = beerClient.createNewBeer(beerDTO);
-        assertNotNull(response);
-        assertEquals(HttpStatusCode.valueOf(201), response.getStatusCode());
-        BeerDTO createdBeer = response.getBody();
-        assertNotNull(createdBeer);
-        assertNotNull(createdBeer.getBeerId());
-        assertEquals(beerDTO.getBeerName(), createdBeer.getBeerName());
-    }
-
-    @Test
-    void getBeerById(){
-
-        Page<BeerDTO> beerDTOPage = beerClient.listBeers();
-        assertNotNull(beerDTOPage.getContent().getFirst());
-        BeerDTO beerDTO = beerDTOPage.getContent().getFirst();
-        assertNotNull(beerDTO.getBeerId());
-        System.out.println(beerDTO.getBeerId());
-
-        org.springframework.http.ResponseEntity<BeerDTO> response = beerClient.getBeerById(beerDTO.getBeerId());
-        assertNotNull(response);
-        assertEquals(HttpStatusCode.valueOf(200), response.getStatusCode());
-        BeerDTO beerById = response.getBody();
-        assertNotNull(beerById);
-        assertEquals(beerDTO.getBeerId(), beerById.getBeerId());
-    }
-
-    @Test
-    void listBeersNoBeerName() {
-        beerClient.listBeers();
-
-    }
-
-    @Test
-    void listBeers() {
-        beerClient.listBeers("IPA", String.valueOf(BeerStyle.AMERICAN_IPA),2,100);
-
-    }
-}
-
-@SpringBootTest
-class BeerClientImplTest {
-
-    @Autowired
-    BeerClientImpl beerClient;
-
-    @Test
-    void testDeleteBeer() {
-        BeerDTO newDto = BeerDTO.builder()
-                .price(new BigDecimal("10.99"))
-                .beerName("Mango Bobs 2")
-                .beerStyle(BeerStyle.IPA)
                 .quantityOnHand(500)
-                .upc("123245")
+                .upc("123245" + unique.substring(Math.max(0, unique.length() - 4))) // keeps it short-ish
                 .build();
+    }
 
-        BeerDTO beerDto = beerClient.createBeer(newDto);
 
-        beerClient.deleteBeer(beerDto.getId());
+    private void safeDelete(UUID beerId) {
+        if (beerId == null) return;
+        try {
+            beerClient.deleteBeer(beerId);
+        } catch (Exception ignored) {
+            // best-effort cleanup (already deleted or server error)
+        }
+    }
 
-        assertThrows(HttpClientErrorException.class, () -> {
-            //should error
-            beerClient.getBeerById(beerDto.getId());
-        });
+    private void safeDelete(BeerDTO created) {
+        if (created == null || created.getBeerId() == null) return;
+        try {
+            beerClient.deleteBeer(created.getBeerId());
+        } catch (Exception ignored) {
+            // best-effort cleanup
+        }
     }
 
     @Test
-    void testUpdateBeer() {
+    void givenBeerCreated_whenGetBeerById_thenReturnBeer_andCleanup() {
+        BeerDTO created = beerClient.createBeer(buildUniqueBeerDto());
 
-        BeerDTO newDto = BeerDTO.builder()
-                .price(new BigDecimal("10.99"))
-                .beerName("Mango Bobs 2")
-                .beerStyle(BeerStyle.IPA)
-                .quantityOnHand(500)
-                .upc("123245")
-                .build();
+        try {
+            // GIVEN
+            assertNotNull(created);
+            assertNotNull(created.getBeerId());
 
-        BeerDTO beerDto = beerClient.createBeer(newDto);
+            // WHEN
+            BeerDTO byId = beerClient.getBeerById(created.getBeerId());
 
-        final String newName = "Mango Bobs 3";
-        beerDto.setBeerName(newName);
-        BeerDTO updatedBeer = beerClient.updateBeer(beerDto);
+            // THEN
+            assertNotNull(byId);
+            assertEquals(created.getBeerId(), byId.getBeerId());
+            assertNotNull(byId.getBeerName());
+            assertNotNull(byId.getBeerStyle());
 
-        assertEquals(newName, updatedBeer.getBeerName());
+        } finally {
+            safeDelete(created);
+        }
     }
 
     @Test
-    void testCreateBeer() {
+    void givenBeerCreated_whenUpdateBeer_thenReturnUpdatedBeer_andCleanup() {
+        BeerDTO created = beerClient.createBeer(buildUniqueBeerDto());
 
-        BeerDTO newDto = BeerDTO.builder()
-                .price(new BigDecimal("10.99"))
-                .beerName("Mango Bobs")
-                .beerStyle(BeerStyle.IPA)
-                .quantityOnHand(500)
-                .upc("123245")
-                .build();
+        try {
+            // GIVEN
+            assertNotNull(created);
+            assertNotNull(created.getBeerId());
 
-        BeerDTO savedDto = beerClient.createBeer(newDto);
-        assertNotNull(savedDto);
+            String newName = created.getBeerName() + " UPDATED";
+
+            // WHEN
+            created.setBeerName(newName);
+            BeerDTO updated = beerClient.updateBeer(created.getBeerId(), created);
+
+            // THEN
+            assertNotNull(updated);
+            assertEquals(created.getBeerId(), updated.getBeerId());
+            assertEquals(newName, updated.getBeerName());
+
+        } finally {
+            safeDelete(created);
+        }
     }
 
     @Test
-    void getBeerById() {
+    void givenBeerCreated_whenDeleteBeer_thenSubsequentGetByIdThrows4xx() {
+        BeerDTO created = beerClient.createBeer(buildUniqueBeerDto());
 
-        Page<BeerDTO> beerDTOS = beerClient.listBeers();
+        try {
+            // GIVEN
+            assertNotNull(created);
+            assertNotNull(created.getBeerId());
 
-        BeerDTO dto = beerDTOS.getContent().get(0);
+            // WHEN
+            BeerDTO deleted = beerClient.deleteBeer(created.getBeerId());
 
-        BeerDTO byId = beerClient.getBeerById(dto.getId());
+            // THEN
+            assertNotNull(deleted);
+            assertEquals(created.getBeerId(), deleted.getBeerId());
 
-        assertNotNull(byId);
+            HttpClientErrorException ex =
+                    assertThrows(HttpClientErrorException.class, () -> beerClient.getBeerById(created.getBeerId()));
+            assertTrue(ex.getStatusCode().is4xxClientError());
+
+        } finally {
+            // best effort: if already deleted, safeDelete ignores errors
+            safeDelete(created);
+        }
     }
 
     @Test
-    void listBeersNoBeerName() {
+    void givenBeersExist_whenListBeersWithDefaults_thenReturnValidPageAndBeerShape() {
+        // WHEN
+        Page<BeerDTO> page = beerClient.listBeers(null, null, null, null);
 
-        beerClient.listBeers(null, null, null, null, null);
+        // THEN
+        assertNotNull(page);
+        assertNotNull(page.getContent());
+        assertTrue(page.getNumber() >= 0);
+        assertTrue(page.getSize() > 0);
+        assertTrue(page.getTotalElements() >= 0);
+
+        assertFalse(page.getContent().isEmpty(), "Expected at least 1 beer in the system");
+
+        BeerDTO first = page.getContent().getFirst();
+        assertNotNull(first.getBeerId());
+        assertNotNull(first.getBeerName());
+        assertNotNull(first.getBeerStyle());
     }
 
     @Test
-    void listBeers() {
+    void givenBeersExist_whenListBeersFilteredByName_thenEveryResultMatchesFilter() {
+        // GIVEN
+        String filter = "ALE";
+        Integer pageNumber = 0;
+        Integer pageSize = 25;
 
-        beerClient.listBeers("ALE", null, null, null, null);
+        // WHEN
+        Page<BeerDTO> page = beerClient.listBeers(filter, null, pageNumber, pageSize);
+
+        // THEN
+        assertNotNull(page);
+        assertNotNull(page.getContent());
+
+        assertEquals(pageNumber, page.getNumber());
+        assertEquals(pageSize, page.getSize());
+
+        page.getContent().forEach(b ->
+                assertTrue(
+                        b.getBeerName() != null && b.getBeerName().toUpperCase().contains(filter),
+                        () -> "Beer name did not match filter. filter=" + filter + ", beerName=" + b.getBeerName()
+                )
+        );
+    }
+
+    @Test
+    void givenBeerCreated_whenListBeersFilteredByExactCreatedName_thenCreatedBeerIsReturned_andCleanup() {
+        BeerDTO created = beerClient.createBeer(buildUniqueBeerDto());
+
+        try {
+            // GIVEN
+            assertNotNull(created);
+            assertNotNull(created.getBeerId());
+            String exactName = created.getBeerName();
+
+            // WHEN
+            Page<BeerDTO> page = beerClient.listBeers(exactName, null, 0, 50);
+
+            // THEN
+            assertNotNull(page);
+            assertNotNull(page.getContent());
+
+            boolean found = page.getContent().stream()
+                    .anyMatch(b -> exactName.equals(b.getBeerName()) && created.getBeerId().equals(b.getBeerId()));
+
+            assertTrue(found, "Expected to find newly created beer by filtering with its exact name");
+
+        } finally {
+            safeDelete(created);
+        }
     }
 }
