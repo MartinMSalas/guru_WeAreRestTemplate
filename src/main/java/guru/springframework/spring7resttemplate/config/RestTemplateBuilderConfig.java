@@ -6,6 +6,7 @@ import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.boot.restclient.autoconfigure.RestTemplateBuilderConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.time.Duration;
@@ -20,9 +21,9 @@ import java.time.Duration;
 @Configuration
 public class RestTemplateBuilderConfig {
 
-
-    @Value("${rest.template.rootUrl}")
-    String rootUrl;
+/*
+    //@Value("${rest.template.rootUrl}")
+    //String rootUrl;
 
     @Value("${rest.template.username}")
     String username;
@@ -30,6 +31,8 @@ public class RestTemplateBuilderConfig {
     @Value("${rest.template.password}")
     String password;
 
+ */
+/*
     @Bean
     RestTemplateBuilder restTemplateBuilder(RestTemplateBuilderConfigurer configurer){
         log.info("Configuring RestTemplateBuilder with root URL: {}", rootUrl);
@@ -43,5 +46,18 @@ public class RestTemplateBuilderConfig {
         RestTemplateBuilder builderWithAuth = builder.basicAuthentication(username,password);
 
         return builderWithAuth.uriTemplateHandler(uriBuilderFactory);
+    }
+
+ */
+    @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder builder,
+                                     @Value("${rest.template.rootUrl}") String rootUrl,
+                                     @Value("${rest.template.username}") String username,
+                                     @Value("${rest.template.password}") String password) {
+        log.info("ROOT URL IS: {}", rootUrl);
+        return builder
+                .rootUri(rootUrl)
+                .basicAuthentication(username, password)
+                .build();
     }
 }

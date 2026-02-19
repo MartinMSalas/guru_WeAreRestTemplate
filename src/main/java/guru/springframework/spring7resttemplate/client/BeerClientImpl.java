@@ -1,10 +1,12 @@
 package guru.springframework.spring7resttemplate.client;
 
+import guru.springframework.spring7resttemplate.config.BeerClientProperties;
 import guru.springframework.spring7resttemplate.model.BeerDTO;
 import guru.springframework.spring7resttemplate.model.BeerDTOPageImpl;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpEntity;
@@ -24,111 +26,99 @@ import java.util.UUID;
  * Project Name: We are Rest Template
  * Description: beExcellent
  */
+@EnableConfigurationProperties(BeerClientProperties.class)
 @RequiredArgsConstructor
 @Service
 public class BeerClientImpl implements BeerClient {
 
-    private final RestTemplateBuilder restTemplateBuilder;
+    private final RestTemplate restTemplate;
 
+    private final BeerClientProperties properties;
 
-    private static final String BEER = "/beer";
+    //private static final String BEER = "/beer";
 
     @Override
     public BeerDTO createBeer(BeerDTO beerDTO) {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(BEER);
 
-        ResponseEntity<BeerDTO> responseEntity =
-                restTemplate.postForEntity(uriComponentsBuilder.toUriString(), beerDTO, BeerDTO.class);
+        ResponseEntity<BeerDTO> response =
+                restTemplate.postForEntity(properties.getBeerPath(), beerDTO, BeerDTO.class);
 
-        return responseEntity.getBody();
+        return response.getBody();
     }
 
     @Override
     public BeerDTO getBeerById(UUID beerId) {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        if(beerId == null){
+
+        if (beerId == null) {
             throw new IllegalArgumentException("Beer ID must not be null");
         }
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(BEER + "/{beerId}")
-                .uriVariables(Map.of("beerId", beerId));
 
-        ResponseEntity<BeerDTO> responseEntity = restTemplate.getForEntity(uriComponentsBuilder.toUriString(), BeerDTO.class);
-        return responseEntity.getBody();
+        ResponseEntity<BeerDTO> response =
+                restTemplate.getForEntity(properties.getBeerPath() + "/{beerId}", BeerDTO.class, beerId);
+
+        return response.getBody();
     }
 
     @Override
     public BeerDTO updateBeer(UUID beerId, BeerDTO beerDTO) {
-        if(beerId == null){
+
+        if (beerId == null) {
             throw new IllegalArgumentException("Beer ID must not be null");
         }
-        if(beerDTO == null){
+        if (beerDTO == null) {
             throw new IllegalArgumentException("BeerDTO must not be null");
         }
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        /* Uri components builder with path variable example:
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(BEER + "/{beerId}")
-                .uriVariables(Map.of("beerId", beerId));
-        */
-        ResponseEntity<BeerDTO> responseEntity = restTemplate.exchange(BEER + "/{beerId}", HttpMethod.PUT,
-                new HttpEntity<>(beerDTO), BeerDTO.class, beerId);
 
-        return responseEntity.getBody();
+        ResponseEntity<BeerDTO> response =
+                restTemplate.exchange(
+                        properties.getBeerPath() + "/{beerId}",
+                        HttpMethod.PUT,
+                        new HttpEntity<>(beerDTO),
+                        BeerDTO.class,
+                        beerId
+                );
+
+        return response.getBody();
     }
 
     @Override
     public BeerDTO deleteBeer(UUID beerId) {
-        if(beerId == null){
+
+        if (beerId == null) {
             throw new IllegalArgumentException("Beer ID must not be null");
         }
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        ResponseEntity<BeerDTO> responseEntity = restTemplate.exchange(BEER + "/{beerId}", HttpMethod.DELETE,
-        null, BeerDTO.class, beerId);
 
-        return responseEntity.getBody();
+        ResponseEntity<BeerDTO> response =
+                restTemplate.exchange(
+                        properties.getBeerPath() + "/{beerId}",
+                        HttpMethod.DELETE,
+                        null,
+                        BeerDTO.class,
+                        beerId
+                );
 
+        return response.getBody();
     }
 
     @Override
     public Page<BeerDTO> listBeers() {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(BEER);
 
-        ResponseEntity<BeerDTOPageImpl> stringResponsePage =
-                restTemplate.getForEntity(uriComponentsBuilder.toUriString(), BeerDTOPageImpl.class);
-        BeerDTOPageImpl responsePageBodypage = stringResponsePage.getBody();
-        responsePageBodypage.getContent().forEach(beer ->
-                System.out.println(beer.getBeerName()));
-        return responsePageBodypage;
+        ResponseEntity<BeerDTOPageImpl> response =
+                restTemplate.getForEntity(properties.getBeerPath(), BeerDTOPageImpl.class);
+
+        return response.getBody();
     }
 
     @Override
     public Page<BeerDTO> listBeers(String beerName, String beerStyle, Integer page, Integer size) {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(BEER);
 
-        if (beerName != null) {
-            uriComponentsBuilder.queryParam("beerName", beerName);
-        }
-        if (beerStyle != null) {
-            uriComponentsBuilder.queryParam("beerStyle", beerStyle);
-        }
-        if (page != null) {
-            uriComponentsBuilder.queryParam("page", page);
-        }
-        if (size != null) {
-            uriComponentsBuilder.queryParam("size", size);
-        }
-
-        ResponseEntity<BeerDTOPageImpl> stringResponsePage =
-                restTemplate.getForEntity( uriComponentsBuilder.toUriString() , BeerDTOPageImpl.class);
-
-        BeerDTOPageImpl responsePageBodypage = stringResponsePage.getBody();
-
-        responsePageBodypage.getContent().forEach(beer ->
-                System.out.println(beer.getBeerName()));
-
-        return responsePageBodypage;
+        return restTemplate.getForObject(
+                "/beer?beerName={beerName}&beerStyle={beerStyle}&page={page}&size={size}",
+                BeerDTOPageImpl.class,
+                beerName,
+                beerStyle,
+                page,
+                size
+        );
     }
 }
-
