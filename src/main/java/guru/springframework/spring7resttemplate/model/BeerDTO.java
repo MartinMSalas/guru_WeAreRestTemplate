@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -22,6 +23,6 @@ public class BeerDTO {
     private String upc;
     private Integer quantityOnHand;
     private BigDecimal price;
-    private LocalDateTime createdDate;
-    private LocalDateTime updateDate;
+    private Instant createdDate;
+    private Instant updateDate;
 }

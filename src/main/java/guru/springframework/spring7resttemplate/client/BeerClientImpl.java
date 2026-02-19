@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -57,12 +59,34 @@ public class BeerClientImpl implements BeerClient {
 
     @Override
     public BeerDTO updateBeer(UUID beerId, BeerDTO beerDTO) {
-        return null;
+        if(beerId == null){
+            throw new IllegalArgumentException("Beer ID must not be null");
+        }
+        if(beerDTO == null){
+            throw new IllegalArgumentException("BeerDTO must not be null");
+        }
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        /* Uri components builder with path variable example:
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromPath(BEER + "/{beerId}")
+                .uriVariables(Map.of("beerId", beerId));
+        */
+        ResponseEntity<BeerDTO> responseEntity = restTemplate.exchange(BEER + "/{beerId}", HttpMethod.PUT,
+                new HttpEntity<>(beerDTO), BeerDTO.class, beerId);
+
+        return responseEntity.getBody();
     }
 
     @Override
     public BeerDTO deleteBeer(UUID beerId) {
-        return null;
+        if(beerId == null){
+            throw new IllegalArgumentException("Beer ID must not be null");
+        }
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        ResponseEntity<BeerDTO> responseEntity = restTemplate.exchange(BEER + "/{beerId}", HttpMethod.DELETE,
+        null, BeerDTO.class, beerId);
+
+        return responseEntity.getBody();
+
     }
 
     @Override
