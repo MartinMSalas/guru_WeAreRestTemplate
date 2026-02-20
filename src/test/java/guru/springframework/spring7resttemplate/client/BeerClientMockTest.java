@@ -1,6 +1,6 @@
 package guru.springframework.spring7resttemplate.client;
 
-
+/*
 import guru.springframework.spring7resttemplate.config.BeerClientProperties;
 
 import guru.springframework.spring7resttemplate.model.BeerDTO;
@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
-
+*/
 /*
  * Author: M
  * Date: 16-Feb-26
