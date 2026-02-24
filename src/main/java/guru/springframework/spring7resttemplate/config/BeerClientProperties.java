@@ -16,6 +16,8 @@ public class BeerClientProperties {
     @Getter
     @Setter
     private String beerPath = "/beer";
-    private String rootUrl;
+    @Getter
+    @Setter
+    private String rootUrl = "http://localhost:8080/api/v1";
 
 }

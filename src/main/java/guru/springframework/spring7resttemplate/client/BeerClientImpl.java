@@ -3,9 +3,8 @@ package guru.springframework.spring7resttemplate.client;
 import guru.springframework.spring7resttemplate.config.BeerClientProperties;
 import guru.springframework.spring7resttemplate.model.BeerDTO;
 import guru.springframework.spring7resttemplate.model.BeerDTOPageImpl;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.data.domain.Page;
@@ -13,11 +12,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Map;
 import java.util.UUID;
 
 /*
@@ -31,9 +27,18 @@ import java.util.UUID;
 @Service
 public class BeerClientImpl implements BeerClient {
 
-    private final RestTemplate restTemplate;
+    private final RestTemplateBuilder restTemplateBuilder;
 
     private final BeerClientProperties properties;
+
+    private RestTemplate restTemplate;
+
+    @PostConstruct
+    void init() {
+        this.restTemplate = restTemplateBuilder
+                .rootUri(properties.getRootUrl())
+                .build();
+    }
 
     //private static final String BEER = "/beer";
 

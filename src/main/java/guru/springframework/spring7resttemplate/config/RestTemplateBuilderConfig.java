@@ -1,15 +1,16 @@
 package guru.springframework.spring7resttemplate.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.boot.restclient.autoconfigure.RestTemplateBuilderConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.util.DefaultUriBuilderFactory;
-
-import java.time.Duration;
 
 /*
  * Author: M
@@ -30,8 +31,8 @@ public class RestTemplateBuilderConfig {
 
     @Value("${rest.template.password}")
     String password;
-
  */
+
 /*
     @Bean
     RestTemplateBuilder restTemplateBuilder(RestTemplateBuilderConfigurer configurer){
@@ -49,6 +50,8 @@ public class RestTemplateBuilderConfig {
     }
 
  */
+    /*
+    // Passing properties directly to RestTemplateBuilder
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder,
                                      @Value("${rest.template.rootUrl}") String rootUrl,
@@ -60,4 +63,40 @@ public class RestTemplateBuilderConfig {
                 .basicAuthentication(username, password)
                 .build();
     }
+
+     */
+
+    // Using a properties class to encapsulate configuration
+    @Bean
+    public RestTemplateBuilder restTemplate(RestTemplateBuilderConfigurer configurer,
+                                            BeerClientProperties properties,
+                                            OAuthClientInterceptor oauthClientInterceptor) {
+        String rootUrl = properties.getRootUrl();
+        assert rootUrl != null;
+        log.info("Configuring RestTemplate with root URL: {}", rootUrl);
+        //log.debug("Username: {}, Password: {}", username, password != null ? "******" : null);
+
+        return configurer.configure(new RestTemplateBuilder())
+                .additionalInterceptors(oauthClientInterceptor)
+                .uriTemplateHandler(new DefaultUriBuilderFactory(rootUrl));
+    }
+
+    @Bean
+    OAuth2AuthorizedClientManager auth2AuthorizedClientManager(ClientRegistrationRepository clientRegistrationRepository,
+        OAuth2AuthorizedClientService oAuth2AuthorizedClientService){
+        // Configure and return an OAuth2AuthorizedClientManager instance
+
+        var authorizedClientProvider = OAuth2AuthorizedClientProviderBuilder
+                .builder()
+                .clientCredentials()
+                .build();
+
+        var authorizedClientManager = new AuthorizedClientServiceOAuth2AuthorizedClientManager
+                (clientRegistrationRepository, oAuth2AuthorizedClientService);
+
+        authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
+
+        return authorizedClientManager;
+    }
+
 }
